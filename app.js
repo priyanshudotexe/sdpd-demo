@@ -8,6 +8,11 @@ function initialize(yearStr, monthStr, dateStr) {
     year = parseInt(yearStr, 10);
     month = parseInt(monthStr, 10);
     day = parseInt(dateStr, 10);
+
+    // Check if parsing succeeded
+    if (isNaN(year) || isNaN(month) || isNaN(day)) {
+      throw new Error();
+    }
   } catch (e) {
     message = "Enter values in a proper numeric format";
     return { message, validDate };
@@ -16,6 +21,7 @@ function initialize(yearStr, monthStr, dateStr) {
   // Days in each month
   const monthDays = {
     1: 31, // January
+    2: 28, // Default February (adjusted below if leap year)
     3: 31, // March
     4: 30, // April
     5: 31, // May
@@ -31,8 +37,6 @@ function initialize(yearStr, monthStr, dateStr) {
   // Leap year check for February
   if (year % 400 === 0 || (year % 4 === 0 && year % 100 !== 0)) {
     monthDays[2] = 29; // February in a leap year
-  } else {
-    monthDays[2] = 28; // February in a common year
   }
 
   // Month validation
@@ -41,28 +45,19 @@ function initialize(yearStr, monthStr, dateStr) {
     return { message, validDate };
   }
 
-  // February 29th check
-  if (month === 2 && day === 29 && monthDays[2] === 28) {
-    message = `February of ${year} does not have 29 days`;
-    return { message, validDate };
-  }
-
   // Day validation based on month
   if (day < 1 || day > monthDays[month]) {
-    if (day < 1) {
-      message = "Invalid date";
-    } else if (day === 31 && monthDays[month] === 30) {
-      message = "This month does not have 31 days";
-    } else if (day > 31) {
-      message = "Invalid date";
+    if (day === 29 && month === 2 && monthDays[2] === 28) {
+      message = `February of ${year} does not have 29 days`; // Leap year error
+    } else if (day > monthDays[month]) {
+      message = `This month does not have ${day} days`;
     } else {
       message = "Invalid date";
     }
-    console.log(message + "sdguihfdlah");
     return { message, validDate };
   }
 
-  // Calculate the day of the week manually
+  // Calculate the day of the week using Zeller's Congruence
   const daysOfWeek = [
     "Sunday",
     "Monday",
@@ -72,19 +67,28 @@ function initialize(yearStr, monthStr, dateStr) {
     "Friday",
     "Saturday",
   ];
-  const centuryAnchor = [2, 0, 5, 3]; // Day of week for 1600, 1700, 1800, 1900 centuries
-  const century = Math.floor(year / 100) % 4;
-  const yearInCentury = year % 100;
+
+  // Adjust for Zeller's Congruence formula
+  if (month < 3) {
+    month += 12;
+    year -= 1;
+  }
+
+  // Zeller's Congruence Calculation
+  const k = year % 100;
+  const j = Math.floor(year / 100);
   const dayOfWeekIndex =
-    (Math.floor(yearInCentury / 4) +
-      day +
-      centuryAnchor[century] +
-      yearInCentury +
-      [0, 3, 3, 6, 1, 4, 6, 2, 5, 0, 3, 5][month - 1]) %
+    (day +
+      Math.floor((13 * (month + 1)) / 5) +
+      k +
+      Math.floor(k / 4) +
+      Math.floor(j / 4) -
+      2 * j) %
     7;
+  const correctedIndex = (dayOfWeekIndex + 7) % 7; // Ensure non-negative result
 
   validDate = true;
-  message = daysOfWeek[dayOfWeekIndex];
+  message = daysOfWeek[correctedIndex];
 
   return { message, validDate };
 }
