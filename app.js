@@ -45,7 +45,6 @@ function initialize(yearStr, monthStr, dateStr) {
     message = "Invalid month";
     return { message, validDate };
   }
-
   // Day validation based on month
   if (day < 1 || day > monthDays[month]) {
     if (day === 29 && month === 2 && monthDays[2] === 28) {
@@ -68,28 +67,9 @@ function initialize(yearStr, monthStr, dateStr) {
     "Friday",
     "Saturday",
   ];
-
-  // Adjust for Zeller's Congruence formula
-  if (month < 3) {
-    month += 12;
-    year -= 1;
-  }
-
-  const k = year % 100;
-  const j = Math.floor(year / 100);
-  const dayOfWeekIndex =
-    (day +
-      Math.floor((13 * (month + 1)) / 5) +
-      k +
-      Math.floor(k / 4) +
-      Math.floor(j / 4) -
-      2 * j) %
-    7;
-  const correctedIndex = (dayOfWeekIndex + 7) % 7; // Ensure non-negative result
-
-  validDate = true;
-  message = daysOfWeek[correctedIndex];
-
+  const inputDate = new Date(year, month-1, day);
+  const dayOfWeekIndex = inputDate.getDay(); // Returns 0 (Sunday) to 6 (Saturday)
+  message = daysOfWeek[dayOfWeekIndex];
   return { message, validDate };
 }
 
